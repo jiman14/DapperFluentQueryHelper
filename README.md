@@ -31,7 +31,7 @@ IEnumerable<BooksInfo> books = new DapperFluentQuery()
 
 # Pre-requisites
 
-It needs entities with properties for linking to table fields (FQ.Book.Id), like:
+It needs entities with properties for linking to table fields (FQ.Book.Id), for example:
 ```
 public class Book
 {
