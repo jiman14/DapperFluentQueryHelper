@@ -4,7 +4,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace LowCodingSoftware.FluentQuery
+namespace LowCodingSoftware.DapperHelper
 {
     public class DapperFluentQueryBase
     {
@@ -33,7 +33,7 @@ namespace LowCodingSoftware.FluentQuery
         {
             var filter = new DapperFluentFilter();
             if (!ModelTypes.TryGetValue(field.Split(".").First(), out Type modelType))
-                throw new InvalidOperationException($"Dapper fluent filter field {field} not found in FROM clause");
+                throw new Exception($"Dapper fluent filter field {field} not found in FROM clause");
 
             if (((values == null || values.Length == 0 || values[0] == null) && !(op == FilterOperator.IsNull || op == FilterOperator.NotNull)) &&
                 ((string.IsNullOrEmpty(values[0]?.ToString()) && !(op == FilterOperator.Like || op == FilterOperator.NotLike)) ||

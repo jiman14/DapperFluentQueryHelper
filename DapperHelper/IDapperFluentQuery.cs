@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 
-namespace LowCodingSoftware.FluentQuery
+namespace LowCodingSoftware.DapperHelper
 {
     public interface IDapperFluentQuery
     {

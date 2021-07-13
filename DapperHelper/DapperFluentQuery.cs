@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 
-namespace LowCodingSoftware.FluentQuery
+namespace LowCodingSoftware.DapperHelper
 {
     public class DapperFluentQuery : DapperFluentQueryBase, IDapperFluentQuery
     {

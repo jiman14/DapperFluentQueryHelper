@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using System.Data;
 using System.Linq;
 
-namespace LowCodingSoftware.FluentQuery
+namespace LowCodingSoftware.DapperHelper
 {
     #region Filter helpers
     public class DapperFluentFilters
