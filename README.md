@@ -1,6 +1,9 @@
 # Dapper Fluent Query Helper
 Dapper helper for writing fluent-mode queries.
 
+ - .Net Standard 2.1.
+ - Only requires Dapper.
+
 # Example
 ```
 IEnumerable<BooksInfo> books = new DapperFluentQuery()
