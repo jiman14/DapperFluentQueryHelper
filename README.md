@@ -4,7 +4,7 @@ Dapper helper for writing fluent-mode queries.
  - .Net Standard 2.1.
  - Only requires Dapper.
 
-# Example
+# Example of use
 ```
 IEnumerable<BooksInfo> books = new DapperFluentQuery()
  .Select(FQ.Book.Id, FQ.Book.Title, FQ.Book.Date, FQ.Book.Price, FQ.Author.Name)
@@ -31,7 +31,7 @@ Resulting in this query:
         Author.Reviews is not null AND
         (
           Book.Price BETWEEN 10 AND 400 OR
-          Book.Price IS NULL)
+          Book.Price IS NULL
         )
   ORDER BY Book.Date
 ```
