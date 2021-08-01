@@ -21,6 +21,21 @@ IEnumerable<BooksInfo> books = new DapperFluentQuery()
  .OrderBy(FQ.Book.Date)
  .Query<BooksInfo>(DBConnection);
 ```
+Resulting in this query:
+```
+ SELECT Book.Id, Book.Title, Book.Date, Book.Price, Author.Name
+  FROM Book
+  JOIN Author ON (Book.AuthorId = Author.Id)
+  WHERE 
+        Book.Category not like "Terror" AND 
+        Author.Reviews is not null AND
+        (
+          Book.Price BETWEEN 10 AND 400 OR
+          Book.Price IS NULL)
+        )
+  ORDER BY Book.Date
+```
+
 
 # Simple, faster
 
@@ -41,3 +56,6 @@ public class Book
 ```
 Thus, I recommend generators for mapping the DB table info into classes.
 
+# Pre-requisites
+
+Dapper Fluent Query Helper is licensed under Apache 2.0.
