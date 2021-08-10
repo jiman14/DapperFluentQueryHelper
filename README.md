@@ -54,8 +54,8 @@ public class Book
   ... 
 }
 ```
-Thus, I recommend generators for mapping the DB table info into classes like [Codverter]. https://codverter.com/src/sqltoclass)
+Thus, I recommend generators for mapping the DB table info into classes like [Codverter]. https://codverter.com/src/sqltoclass "Codverter")
 
 # Pre-requisites
 
-Dapper Fluent Query Helper is licensed under [Apache 2.0.] (https://github.com/jiman14/DapperFluentQueryHelper/blob/main/LICENSE)
+Dapper Fluent Query Helper is licensed under [Apache 2.0.](https://github.com/jiman14/DapperFluentQueryHelper/blob/main/LICENSE "Apache 2.0 License")
