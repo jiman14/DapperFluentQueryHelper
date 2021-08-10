@@ -54,7 +54,7 @@ public class Book
   ... 
 }
 ```
-Thus, I recommend generators for mapping the DB table info into classes like [Codverter]. https://codverter.com/src/sqltoclass "Codverter")
+Thus, I recommend generators for mapping the DB table info into classes like [Codverter](https://codverter.com/src/sqltoclass "Codverter").
 
 # Pre-requisites
 
