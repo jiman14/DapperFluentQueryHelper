@@ -3,22 +3,25 @@ Dapper helper for writing fluent-mode queries.
 
  - .Net Standard 2.1.
  - Only requires Dapper.
+ - Uses Linq expressions for preventing hand-written strings.
 
 # Example of use
 ```
 IEnumerable<BooksInfo> books = new DapperFluentQuery()
- .Select(FQ.Book.Id, FQ.Book.Title, FQ.Book.Date, FQ.Book.Price, FQ.Author.Name)
+ .Select(() => Book.Id, Book.Title, Book.Date, Book.Price)
+ .Select(() => FQ.Author.Name)
  .From<Book>()
- .Join<Author>(FQ.Book.AuthorId, JoinOperator.Equals, FQ.Author.Id)
+ .Join(() => Book.AuthorId, JoinOperator.Equals, () => Author.Id)
  .Where(w => w.And(
-      w.Filter(FQ.Book.Category, Operator.NotLike, "Terror"),
-      w.Filter(FQ.Author.Reviews, Operator.NotNull),
+      w.Filter(() => Author.Price < 400),
+      w.Filter(() => Book.Category, Operator.NotLike, "Terror"),
+      w.FilterIsNotNull(() => Author.Reviews),
       w.Or(
-        w.Filter(FQ.Book.Price, Operator.Between, 10, 400),
-        w.Filter(FQ.Book.Price, Operator.IsNull)
+        w.FilterBetween(() => Book.Price, 10, 400),
+        w.FilterIsNull(() => Book.Price)
         )
       ))
- .OrderBy(FQ.Book.Date)
+ .OrderBy(() => Book.Date)
  .Query<BooksInfo>(DBConnection);
 ```
 Resulting in this query:
@@ -27,6 +30,7 @@ Resulting in this query:
   FROM Book
   JOIN Author ON (Book.AuthorId = Author.Id)
   WHERE 
+        Book.Price < 400 AND 
         Book.Category not like "Terror" AND 
         Author.Reviews is not null AND
         (
@@ -43,18 +47,6 @@ Resulting in this query:
 - Property type cache.
 - Dynamic parameter generation with DB types.
 - Simple and easy to extend less than **four hundred code lines**.
-
-# Pre-requisites
-
-It needs entities with properties for linking to table fields (FQ.Book.Id), for example:
-```
-public class Book
-{
-  public string Id {get; private set;} = nameof(Book) + "." + nameof(Id);
-  ... 
-}
-```
-Thus, I recommend generators for mapping the DB table info into classes like [Codverter](https://codverter.com/src/sqltoclass "Codverter").
 
 # License
 
