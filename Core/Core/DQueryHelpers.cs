@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using System.Data;
 using System.Linq;
 
-namespace LowCodingSoftware.DapperHelper
+namespace DapperFluentQueryHelper.Core
 {
     #region Filter helpers
     public class DapperFluentFilters
@@ -28,20 +28,26 @@ namespace LowCodingSoftware.DapperHelper
             RightJoinField = rightJoinField;
         }
         public string GetJoin(JoinType joinType) 
-        => $" {joinType.ToString()} JOIN {RightJoinField.Split(".").First()}";
+        => $" {joinType.ToString()} JOIN {RightJoinField.Split('.').First()}";
 
         public string GetJoinFilter()
         => $"{LeftJoinField} " + 
-            Operator switch {
-                JoinOperator.Distinct => "!=",
-                JoinOperator.Mayor => ">",
-                JoinOperator.Minor => "<",
-                _ => "=" } + 
+            (Operator == JoinOperator.Distinct? "!=":
+            Operator == JoinOperator.Mayor? ">":
+            Operator == JoinOperator.Minor? "<": "=") + 
             $"{RightJoinField}";
     }
     #endregion
 
     #region Enums
+
+    internal enum CommandType
+    {
+        select,
+        insert,
+        update,
+        delete
+    }
     public enum JoinOperator
     {
         Distinct,
@@ -77,9 +83,9 @@ namespace LowCodingSoftware.DapperHelper
         EndWith,
         BeginWith,
         GreaterThan,
-        GreaterOrEqualsThan,
+        GreaterThanOrEqual,
         LesserThan,
-        LesserOrEqualsThan,
+        LessThanOrEqual,
         NotIn,
         NotLike,
         NotLikeFull,
@@ -97,12 +103,13 @@ namespace LowCodingSoftware.DapperHelper
 
         public static DbType GetPropertyType(Type modelType, string propertyName) 
             => NetTypesToDBConversions.GetDBType(GetPropertyInfo(modelType, propertyName));
-        
+        public static void SetPropertyType(string propertyName, Type propertyType) 
+            => TypesCache.TryAdd(propertyName, propertyType);
         private static Type GetPropertyInfo(Type modelType, string propertyName)
         {
             if (!TypesCache.TryGetValue(propertyName, out Type value))
             {
-                value = modelType.GetProperty(propertyName.Split(".").Last()).PropertyType;
+                value = modelType.GetProperty(propertyName.Split('.').Last()).PropertyType;
                 TypesCache.TryAdd(propertyName, value);
             }
             return value;

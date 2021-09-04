@@ -3,10 +3,11 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Linq.Expressions;
 
-namespace LowCodingSoftware.DapperHelper
+namespace DapperFluentQueryHelper.Core
 {
-    public class DapperFluentQuery : DapperFluentQueryBase, IDapperFluentQuery
+    public class DQuery : DFilteredQuery, IDQuery
     {
         #region Query dapper
 
@@ -17,17 +18,20 @@ namespace LowCodingSoftware.DapperHelper
 
         #region Select commands
 
-        public DapperFluentQuery Select(params string[] fields) =>
+        public DQuery Select<T>(Expression<Func<T>> expression) =>
+            Select(false, ((MemberInitExpression)expression?.Body)?.Bindings?.Select(p => p.Member.Name));
+        public DQuery Select(params string[] fields) =>
             Select(false, fields);
-        public DapperFluentQuery SelectDistinct(params string[] fields) =>
+        public DQuery SelectDistinct(params string[] fields) =>
             Select(true, fields);
-        private DapperFluentQuery Select(bool distinct, params string[] fields)
+        private DQuery Select(bool distinct, IEnumerable<string> fields)
         {
-            Distinct = (fields.Length == 0) ? false: distinct;
-            SelectFields = (fields.Length == 0)? "*": string.Join(",", fields.Where(f => !string.IsNullOrEmpty(f)));
+            if (fields == null) throw new ArgumentNullException(nameof(fields));
+            Distinct = (fields.Count() == 0) ? false: distinct;
+            SelectFields = (fields.Count() == 0)? "*": string.Join(",", fields.Where(f => !string.IsNullOrEmpty(f)));
             return this;
         }
-        public DapperFluentQuery SelectCount(string columnName = "*")
+        public DQuery SelectCount(string columnName = "*")
         {
             SelectFields = $"COUNT({columnName})";
             return this;
@@ -36,7 +40,7 @@ namespace LowCodingSoftware.DapperHelper
         #endregion
 
         #region From & Joins
-        public DapperFluentQuery From<T>()
+        public DQuery From<T>()
         {
             var modelType = typeof(T);
             ModelTypes.TryAdd(modelType.Name, modelType);
@@ -51,11 +55,11 @@ namespace LowCodingSoftware.DapperHelper
         /// <param name="joinOperator"></param>
         /// <param name="rightJoinField"></param>
         /// <returns></returns>
-        public DapperFluentQuery Join<T>(string leftJoinField, JoinOperator joinOperator, string rightJoinField)
+        public DQuery Join<T>(string leftJoinField, JoinOperator joinOperator, string rightJoinField)
         => Join<T>(JoinType.Inner, new DapperFluentJoinFilter(leftJoinField, joinOperator, rightJoinField));
-        public DapperFluentQuery LeftJoin<T>(string leftJoinField, JoinOperator joinOperator, string rightJoinField)
+        public DQuery LeftJoin<T>(string leftJoinField, JoinOperator joinOperator, string rightJoinField)
         => Join<T>(JoinType.Left, new DapperFluentJoinFilter(leftJoinField, joinOperator, rightJoinField));
-        public DapperFluentQuery RightJoin<T>(string leftJoinField, JoinOperator joinOperator, string rightJoinField)
+        public DQuery RightJoin<T>(string leftJoinField, JoinOperator joinOperator, string rightJoinField)
         => Join<T>(JoinType.Right, new DapperFluentJoinFilter(leftJoinField, joinOperator, rightJoinField));
 
         /// <summary>
@@ -64,13 +68,13 @@ namespace LowCodingSoftware.DapperHelper
         /// </summary>
         /// <param name="joinFilters"></param>
         /// <returns></returns>
-        public DapperFluentQuery AddJoinFilter(bool AndOr, string leftJoinField, JoinOperator joinOperator, string rightJoinField)
+        public DQuery AddJoinFilter(bool AndOr, string leftJoinField, JoinOperator joinOperator, string rightJoinField)
         {
             FromClause += $"{(AndOr ? "AND":"OR")} {new DapperFluentJoinFilter(leftJoinField, joinOperator, rightJoinField).GetJoinFilter()}";
             return this;
         }
 
-        private DapperFluentQuery Join<T>(JoinType joinType, DapperFluentJoinFilter joinFilter)
+        private DQuery Join<T>(JoinType joinType, DapperFluentJoinFilter joinFilter)
         {
             var modelType = typeof(T);
             ModelTypes.TryAdd(modelType.Name, modelType);
@@ -79,74 +83,9 @@ namespace LowCodingSoftware.DapperHelper
         }
         #endregion
 
-        #region Filter query
-
-        public DapperFluentFilter Filter(string field, FilterOperator op, params object[] values)
-            => FilterBase(field, op, values);
-
-        public DapperFluentQuery Where(Func<DapperFluentQuery, DapperFluentFilters> where)
-        {
-            var filters = where.Invoke(this);
-            return Where(filters.FiltersStr);
-        }
-        public DapperFluentQuery Where(Func<DapperFluentQuery, DapperFluentFilter> where)
-        {
-            var filter = where.Invoke(this);
-            return Where(filter.CustomFilter);
-        }                
-        private DapperFluentQuery Where(string filtersStr)
-        {
-            WhereClause = string.IsNullOrEmpty(filtersStr)? string.Empty: $"WHERE {filtersStr}";
-            return this;
-        }
-
-        /// <summary>
-        /// Parenthesis: ( ... )
-        /// </summary>
-        /// <param name="filters"></param>
-        /// <returns></returns>
-        public DapperFluentFilters P(DapperFluentFilters filters) => new DapperFluentFilters($"({filters.FiltersStr})");
-        /// <summary>
-        /// Parenthesis Not: NOT ( ... )
-        /// </summary>
-        /// <param name="filters"></param>
-        /// <returns></returns>
-        public DapperFluentFilters PNot(DapperFluentFilters filters) => new DapperFluentFilters($"NOT ({filters.FiltersStr})");
-        /// <summary>
-        /// And filter join: filter1 AND filter2 AND ...
-        /// </summary>
-        /// <param name="filters"></param>
-        /// <returns></returns>
-        public DapperFluentFilters And(params DapperFluentFilter[] filters) => AndOr(true, filters);
-        /// <summary>
-        /// And filters join: (filter1 AND filter2) AND (filter3 OR filter4) ...
-        /// </summary>
-        /// <param name="filters"></param>
-        /// <returns></returns>
-        public DapperFluentFilters And(params DapperFluentFilters[] filters) => AndOr(true, filters);
-        /// <summary>
-        /// OR filter join: And: filter1 OR filter2 OR ...
-        /// </summary>
-        /// <param name="filters"></param>
-        /// <returns></returns>
-        public DapperFluentFilters Or(params DapperFluentFilters[] filters) => AndOr(false, filters);
-        /// <summary>
-        /// OR filters join: (filter1 AND filter2) OR (filter3 OR filter4) ...
-        /// </summary>
-        /// <param name="filters"></param>
-        /// <returns></returns>
-        public DapperFluentFilters Or(params DapperFluentFilter[] filters) => AndOr(false, filters);
-
-        private DapperFluentFilters AndOr(bool and, params DapperFluentFilter[] filters)
-            => new DapperFluentFilters(string.Join($" {(and ? "AND" : "OR")} ", filters.Where(f => !string.IsNullOrEmpty(f.CustomFilter)).Select(f => f.CustomFilter)));
-        private DapperFluentFilters AndOr(bool and, params DapperFluentFilters[] filters)
-            => new DapperFluentFilters(string.Join($" {(and ? "AND" : "OR")} ", filters.Where(f => !string.IsNullOrEmpty(f.FiltersStr)).Select(f => f.FiltersStr)));
-
-        #endregion
-
         #region Group, order & having
 
-        public DapperFluentQuery GroupBy(params string[] fileds)
+        public DQuery GroupBy(params string[] fileds)
         {
             GroupClause = fileds.Length == 0 ? string.Empty : $"GROUP BY {string.Join(",", fileds.Where(f => !string.IsNullOrEmpty(f)))}";
             return this;
@@ -160,7 +99,7 @@ namespace LowCodingSoftware.DapperHelper
         /// </summary>
         /// <param name="orderFields"></param>
         /// <returns></returns>
-        public DapperFluentQuery OrderBy(params string[] orderFields)
+        public DQuery OrderBy(params string[] orderFields)
         {
             var sep = ",";
             var space = " ";
@@ -177,15 +116,15 @@ namespace LowCodingSoftware.DapperHelper
             return this;
         }
 
-        public DapperFluentQuery Having(string expr, JoinOperator op, string value)
+        public DQuery Having(string expr, JoinOperator op, string value)
         {
-            var having = op switch
-            {
-                JoinOperator.Distinct => $"{expr} <> '{value}' ",                
-                JoinOperator.Mayor => $"{expr} > '{value}' ",
-                JoinOperator.Minor => $"{expr} < '{value}' ",
-                _=> $"{expr} = '{value}' "
-            };
+            var having =
+            (
+                op == JoinOperator.Distinct ? $"{expr} <> '{value}' " :
+                op == JoinOperator.Mayor ? $"{expr} > '{value}' " :
+                op == JoinOperator.Minor ? $"{expr} < '{value}' " :
+                $"{expr} = '{value}' "
+            );            
             HavingClause = $"HAVING ({having})";
 
             return this;
@@ -198,14 +137,14 @@ namespace LowCodingSoftware.DapperHelper
         /// OFFSET 0 ROWS FETCH NEXT 1 ROWS ONLY
         /// </summary>
         /// <returns></returns>
-        public DapperFluentQuery LimitOne() =>
+        public DQuery LimitOne() =>
             Limit(0, 1);
         /// <summary>
         /// OFFSET 0 ROWS FETCH NEXT {nRows} ROWS ONLY
         /// </summary>
         /// <param name="nRows"></param>
         /// <returns></returns>
-        public DapperFluentQuery Limit(int nRows) =>
+        public DQuery Limit(int nRows) =>
             Limit(0, nRows);
         /// <summary>
         /// OFFSET {offset} ROWS FETCH NEXT {nRows} ROWS ONLY
@@ -213,7 +152,7 @@ namespace LowCodingSoftware.DapperHelper
         /// <param name="offset"></param>
         /// <param name="nRows"></param>
         /// <returns></returns>
-        public DapperFluentQuery Limit(int offset, int nRows)
+        public DQuery Limit(int offset, int nRows)
         {
             if (OrderClause == null)
                 throw new InvalidOperationException("Dapper fluent Query error: ORDER BY clause is mandatory for fetching query results with pagination limits.");
