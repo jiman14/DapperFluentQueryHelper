@@ -8,20 +8,20 @@ Dapper helper for writing fluent-mode queries.
 # Example of use
 ```
 IEnumerable<BooksInfo> books = new DapperFluentQuery()
- .Select(() => Book.Id, Book.Title, Book.Date, Book.Price)
- .Select(() => FQ.Author.Name)
+ .Select(nameof(Book.Id), nameof(Book.Title), nameof(Book.Date), nameof(Book.Price))
+ .Select($"{nameof(Author)}.{nameof(Author.Name)}")
  .From<Book>()
- .Join(() => Book.AuthorId, JoinOperator.Equals, () => Author.Id)
+ .Join(nameof(Book.Id), JoinOperator.Equals, $"{nameof(Author)}.{nameof(Author.Id)}")
  .Where(w => w.And(
-      w.Filter(() => Author.Price < 400),
-      w.Filter(() => Book.Category, Operator.NotLike, "Terror"),
-      w.FilterIsNotNull(() => Author.Reviews),
+      w.Filter($"{nameof(Author)}.{nameof(Author.Prive)}" < 400),
+      w.Filter(nameof(Book.Category), Operator.NotLike, "Terror"),
+      w.FilterIsNotNull($"{nameof(Author)}.{nameof(Author.Reviews)}"),
       w.Or(
-        w.FilterBetween(() => Book.Price, 10, 400),
-        w.FilterIsNull(() => Book.Price)
+        w.FilterBetween(nameof(Book.Price), 10, 400),
+        w.FilterIsNull(nameof(Book.Price))
         )
       ))
- .OrderBy(() => Book.Date)
+ .OrderBy(Book.Date)
  .Query<BooksInfo>(DBConnection);
 ```
 Resulting in this query:
