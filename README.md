@@ -27,7 +27,7 @@ Dapper helper for writing fluent-mode queries.
             w.FilterIsNull(nameof(Book.Price))
             )
             ))
-        .OrderBy(Book.Date)
+        .OrderBy(nameof(Book.Date))
         .Query<BooksInfo>(DBConnection);    
 ```
 
