@@ -1,165 +1,105 @@
 ﻿using Dapper;
 using System;
-using System.Collections.Generic;
-using System.Data;
+using System.Collections.Concurrent;
 using System.Linq;
-using System.Linq.Expressions;
 
 namespace DapperFluentQueryHelper.Core
 {
-    public class DQuery : DFilteredQuery, IDQuery
-    {
-        #region Query dapper
+    public class DQuery
+    {       
+        #region Model types & query components & parameters
+        protected enum CommandTypes
+        {
+            select,
+            update,
+            delete
+        }
+        protected CommandTypes CommandType = CommandTypes.select;
+        protected ConcurrentDictionary<string, Type> ModelTypes = new ConcurrentDictionary<string, Type>();
+        protected string SelectFields { get; set; } = string.Empty;
+        protected string UpdateFields { get; set; } = string.Empty;        
+        protected string TableName { get; set; }
+        protected string FromClause { get; set; }
+        protected string WhereClause { get; set; }        
+        protected string GroupClause { get; set; }
+        protected string HavingClause { get; set; }
+        protected string OrderClause { get; set; }
+        protected string LimitClause { get; set; }
+        protected string DeleteQuery { get; set; }
+        protected string UpdateQuery { get; set; }
+        protected bool Distinct { get; set; } = false;
 
-        public IEnumerable<T> Query<T>(IDbConnection connection) => connection.Query<T>(QueryStr, Parameters);
-        public T QueryFirst<T>(IDbConnection connection) => connection.QueryFirst<T>(QueryStr, Parameters);
+        internal DynamicParameters Parameters { get; private set; } = new DynamicParameters();
+        private int ParameterIndex { get; set; } = 0;
 
+        public string QueryStr
+            => $"SELECT {(Distinct ? "DISTINCT" : string.Empty)} {SelectFields} FROM {FromClause} {WhereClause} {GroupClause} {HavingClause} {OrderClause} {LimitClause}"
+            .Replace("__", ".");
+        public string UpdateStr
+            => $"UPDATE {TableName} SET {UpdateFields} {WhereClause}"
+            .Replace("__", ".");
+        public string DeleteStr
+            => $"DELETE FROM {TableName} {WhereClause}"
+            .Replace("__", ".");
         #endregion
 
-        #region Select commands
-
-        public DQuery Select<T>(Expression<Func<T>> expression) =>
-            Select(false, ((MemberInitExpression)expression?.Body)?.Bindings?.Select(p => p.Member.Name));
-        public DQuery Select(params string[] fields) =>
-            Select(false, fields);
-        public DQuery SelectDistinct(params string[] fields) =>
-            Select(true, fields);
-        private DQuery Select(bool distinct, IEnumerable<string> fields)
+        #region Private methods
+        internal string AddUpdateProperty<T>(string field, object value)
         {
-            if (fields == null) throw new ArgumentNullException(nameof(fields));
-            Distinct = (fields.Count() == 0) ? false: distinct;
-            SelectFields = (fields.Count() == 0)? "*": string.Join(",", fields.Where(f => !string.IsNullOrEmpty(f)));
-            return this;
-        }
-        public DQuery SelectCount(string columnName = "*")
+            var pIndex = ParameterIndex + 1;
+            Parameters.Add($"P{++ParameterIndex}", value, dbType: PropertiesTypeCache.GetPropertyType(typeof(T), field));
+            return $"{field} = @P{pIndex}";
+        }       
+        internal DapperFluentFilter FilterBase(string field, FilterOperator op, params object[] values)
         {
-            SelectFields = $"COUNT({columnName})";
-            return this;
-        }
+            var filter = new DapperFluentFilter();
+            if (!field.Contains(".")) field = $"{TableName??FromClause}.{field}";
+            if (!ModelTypes.TryGetValue(field.Split('.').First(), out Type modelType))
+                throw new Exception($"Dapper fluent filter field {field} not found in FROM clause");
 
-        #endregion
+            if (((values == null || values.Length == 0 || values[0] == null) && !(op == FilterOperator.IsNull || op == FilterOperator.NotNull)) &&
+                ((string.IsNullOrEmpty(values[0]?.ToString()) && !(op == FilterOperator.Like || op == FilterOperator.NotLike)) ||
+                (op == FilterOperator.Between && ((values.Length != 2) || string.IsNullOrEmpty(values[1]?.ToString())))))
+                return filter;
 
-        #region From & Joins
-        public DQuery From<T>()
-        {
-            var modelType = typeof(T);
-            ModelTypes.TryAdd(modelType.Name, modelType);
-            FromClause = modelType.Name;
-            return this;
-        }
-
-        /// <summary>
-        /// Join: JOIN rightJoinFieldTable ON leftJoinField joinOperator rightJoinField. 
-        /// </summary>
-        /// <param name="leftJoinField"></param>
-        /// <param name="joinOperator"></param>
-        /// <param name="rightJoinField"></param>
-        /// <returns></returns>
-        public DQuery Join<T>(string leftJoinField, JoinOperator joinOperator, string rightJoinField)
-        => Join<T>(JoinType.Inner, new DapperFluentJoinFilter(leftJoinField, joinOperator, rightJoinField));
-        public DQuery LeftJoin<T>(string leftJoinField, JoinOperator joinOperator, string rightJoinField)
-        => Join<T>(JoinType.Left, new DapperFluentJoinFilter(leftJoinField, joinOperator, rightJoinField));
-        public DQuery RightJoin<T>(string leftJoinField, JoinOperator joinOperator, string rightJoinField)
-        => Join<T>(JoinType.Right, new DapperFluentJoinFilter(leftJoinField, joinOperator, rightJoinField));
-
-        /// <summary>
-        /// Join: JOIN rightJoinFieldTable ON (leftJoinField joinOperator rightJoinField AND () 
-        /// FQ.Person.IdentifierTypeId, JoinOperator.Equals, FQ.IdentifierType.Id
-        /// </summary>
-        /// <param name="joinFilters"></param>
-        /// <returns></returns>
-        public DQuery AddJoinFilter(bool AndOr, string leftJoinField, JoinOperator joinOperator, string rightJoinField)
-        {
-            FromClause += $"{(AndOr ? "AND":"OR")} {new DapperFluentJoinFilter(leftJoinField, joinOperator, rightJoinField).GetJoinFilter()}";
-            return this;
-        }
-
-        private DQuery Join<T>(JoinType joinType, DapperFluentJoinFilter joinFilter)
-        {
-            var modelType = typeof(T);
-            ModelTypes.TryAdd(modelType.Name, modelType);
-            FromClause += $"{joinFilter.GetJoin(joinType)} ON {joinFilter.GetJoinFilter()}";            
-            return this;
-        }
-        #endregion
-
-        #region Group, order & having
-
-        public DQuery GroupBy(params string[] fileds)
-        {
-            GroupClause = fileds.Length == 0 ? string.Empty : $"GROUP BY {string.Join(",", fileds.Where(f => !string.IsNullOrEmpty(f)))}";
-            return this;
-        }
-
-        /// <summary>
-        /// Fill orderColumns param with direction intercalated with (Ascending or Descending), for ex.: ID,Ascending,CREATION_DATE,Descending 
-        /// Or fill orderColumns param with direction intercalated with (true or false), for ex.: ID,true,CREATION_DATE,false 
-        /// Or fill orderColumns param with direction intercalated with (asc or desc), for ex.: ID,asc,CREATION_DATE,desc
-        /// In no direction is specified, default order is asc.
-        /// </summary>
-        /// <param name="orderFields"></param>
-        /// <returns></returns>
-        public DQuery OrderBy(params string[] orderFields)
-        {
-            var sep = ",";
-            var space = " ";
-            var order = orderFields.Length == 0 ? string.Empty : $"ORDER BY {string.Join(sep, orderFields.Where(o => !string.IsNullOrEmpty(o)))}";
-            OrderClause = order
-                .Replace($"{sep}{SortDirection.Ascending}", $"{space}{QueryOrderBy.asc}")
-                .Replace($"{sep}{SortDirection.Descending}", $"{space}{QueryOrderBy.desc}");
-            OrderClause = OrderClause
-                .Replace($"{sep}{bool.TrueString}", $"{space}{QueryOrderBy.asc}")
-                .Replace($"{sep}{bool.FalseString}", $"{space}{QueryOrderBy.desc}");
-            OrderClause = OrderClause
-                .Replace($"{sep}{QueryOrderBy.asc}", $"{space}{QueryOrderBy.asc}")
-                .Replace($"{sep}{QueryOrderBy.desc}", $"{space}{QueryOrderBy.desc}");
-            return this;
-        }
-
-        public DQuery Having(string expr, JoinOperator op, string value)
-        {
-            var having =
+            var pIndex = ParameterIndex + 1;
+            filter.CustomFilter = 
             (
-                op == JoinOperator.Distinct ? $"{expr} <> '{value}' " :
-                op == JoinOperator.Mayor ? $"{expr} > '{value}' " :
-                op == JoinOperator.Minor ? $"{expr} < '{value}' " :
-                $"{expr} = '{value}' "
-            );            
-            HavingClause = $"HAVING ({having})";
+                op == FilterOperator.In? $"{field} in @P{pIndex} ":
+                op == FilterOperator.NotIn ? $"{field} not in @P{pIndex} " :
+                op == FilterOperator.IsNull ? $"{field} is Null " :
+                op == FilterOperator.NotNull ? $"{field} is not null " :
+                op == FilterOperator.Distinct ? $"{field} <> @P{pIndex} " :
+                op == FilterOperator.Equals ? $"{field} = @P{pIndex} " :
+                op == FilterOperator.Like ? $"{field} like @P{pIndex} " :
+                op == FilterOperator.LikeFull ? $"{field} like CONCAT('%', @P{pIndex}, '%') " :
+                op == FilterOperator.EndWith ? $"{field} like CONCAT('%', @P{pIndex}) " :
+                op == FilterOperator.BeginWith ? $"{field} like CONCAT(@P{pIndex}, '%') " :
+                op == FilterOperator.NotLike ? $"{field} not like @P{pIndex} " :
+                op == FilterOperator.NotLikeFull ? $"{field} not like CONCAT('%', @P{pIndex}, '%') " :
+                op == FilterOperator.NotEndWith ? $"{field} not like CONCAT('%', @P{pIndex}) " :
+                op == FilterOperator.NotBeginWith ? $"{field} not like CONCAT(@P{pIndex}, '%') " :
+                op == FilterOperator.GreaterThan ? $"{field} > @P{pIndex} " :
+                op == FilterOperator.GreaterThanOrEqual ? $"{field} >= @P{pIndex} " :
+                op == FilterOperator.LesserThan ? $"{field} < @P{pIndex} " :
+                op == FilterOperator.LessThanOrEqual ? $"{field} <= @P{pIndex} " :
+                op == FilterOperator.Between ? $"{field} between @P{pIndex} and @P{++pIndex} " :
+                string.Empty);
+            var paramNumber = 
+            (
+                op == FilterOperator.In || op == FilterOperator.NotIn ? -1 :                
+                op == FilterOperator.IsNull || op == FilterOperator.NotNull ? 0 :                
+                op == FilterOperator.Between ? 2 : 1
+            );
+            if (paramNumber == -1)
+                Parameters.Add($"P{++ParameterIndex}", values.ToList().First().ToString().StartsWith($"{nameof(System)}.{nameof(System.Collections)}")
+                    ? values.ToList().First(): values);
 
-            return this;
+            for (int i = 0; i < paramNumber; i++)
+                Parameters.Add($"P{++ParameterIndex}", values[i], dbType: PropertiesTypeCache.GetPropertyType(modelType, field));
+
+            return filter;
         }
-        #endregion
-
-        #region Limit query
-
-        /// <summary>
-        /// OFFSET 0 ROWS FETCH NEXT 1 ROWS ONLY
-        /// </summary>
-        /// <returns></returns>
-        public DQuery LimitOne() =>
-            Limit(0, 1);
-        /// <summary>
-        /// OFFSET 0 ROWS FETCH NEXT {nRows} ROWS ONLY
-        /// </summary>
-        /// <param name="nRows"></param>
-        /// <returns></returns>
-        public DQuery Limit(int nRows) =>
-            Limit(0, nRows);
-        /// <summary>
-        /// OFFSET {offset} ROWS FETCH NEXT {nRows} ROWS ONLY
-        /// </summary>
-        /// <param name="offset"></param>
-        /// <param name="nRows"></param>
-        /// <returns></returns>
-        public DQuery Limit(int offset, int nRows)
-        {
-            if (OrderClause == null)
-                throw new InvalidOperationException("Dapper fluent Query error: ORDER BY clause is mandatory for fetching query results with pagination limits.");
-            LimitClause += $"OFFSET {offset} ROWS FETCH NEXT {nRows} ROWS ONLY";
-            return this;
-        }
-
         #endregion
     }
 }

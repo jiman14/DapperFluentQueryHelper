@@ -4,34 +4,8 @@ using System.Linq.Expressions;
 
 namespace DapperFluentQueryHelper.Core
 {
-    public class DFilteredQuery: DQueryBase, IDFilteredQuery
-    {
-        public DapperFluentFilter Filter<T>(Expression<Func<T>> expression)
-        {
-            if (!(expression?.Body is BinaryExpression)) throw new ArgumentException("Must be a binary expression, i.e. entity.prop1 == 2");
-            var be = expression?.Body as BinaryExpression;
-            var op = be.NodeType == ExpressionType.Equal ? FilterOperator.Equals :
-                be.NodeType == ExpressionType.NotEqual ? FilterOperator.Distinct :
-                be.NodeType == ExpressionType.GreaterThan ? FilterOperator.GreaterThan :
-                be.NodeType == ExpressionType.LessThan ? FilterOperator.LesserThan :
-                be.NodeType == ExpressionType.GreaterThanOrEqual ? FilterOperator.GreaterThanOrEqual :
-                be.NodeType == ExpressionType.LessThanOrEqual ? FilterOperator.LessThanOrEqual :
-                throw new ArgumentException("Binary operators allowed: ==, !=, >, <, <=, >=");
-            return FilterBase(GetFieldFromBinaryExpression(be), op, GetValueFromBinaryExpression(be));
-        }
-        private string GetFieldFromBinaryExpression(BinaryExpression be)
-        {
-            if (be.Left is MemberExpression) return GetFieldFromExpression(be.Left as MemberExpression);
-            else if (be.Right is MemberExpression) return GetFieldFromExpression(be.Right as MemberExpression);
-            throw new ArgumentException("BinaryExpression must have one MemberExpression");
-        }        
-        private object GetValueFromBinaryExpression(BinaryExpression be)
-        {
-            if (be.Left is ConstantExpression) return (be.Left as ConstantExpression).Value;
-            else if (be.Right is ConstantExpression) return (be.Right as ConstantExpression).Value;
-            throw new ArgumentException("BinaryExpression must have one ConstantExpression");
-        }
-        private string GetFieldFromExpression(MemberExpression op) => $"{op.Member.DeclaringType.Name}.{op.Member.Name}";        
+    public class DFilteredQuery: DQuery
+    {       
         public DapperFluentFilter Filter(string field, FilterOperator op, params object[] values)
             => FilterBase(field, op, values);
         public DapperFluentFilter FilterIn(string field, params object[] values)
@@ -42,21 +16,7 @@ namespace DapperFluentQueryHelper.Core
             => FilterBase(field, FilterOperator.IsNull);
         public DapperFluentFilter FilterNotIsNull(string field)
             => FilterBase(field, FilterOperator.NotNull);
-        public IDFilteredQuery Where(Func<IDFilteredQuery, DapperFluentFilters> where)
-        {
-            var filters = where.Invoke(this);
-            return Where(filters.FiltersStr);
-        }
-        public IDFilteredQuery Where(Func<IDFilteredQuery, DapperFluentFilter> where)
-        {
-            var filter = where.Invoke(this);
-            return Where(filter.CustomFilter);
-        }
-        private IDFilteredQuery Where(string filtersStr)
-        {
-            WhereClause = string.IsNullOrEmpty(filtersStr) ? string.Empty : $"WHERE {filtersStr}";
-            return this;
-        }
+
         /// <summary>
         /// Parenthesis: ( ... )
         /// </summary>

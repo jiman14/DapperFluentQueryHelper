@@ -5,7 +5,9 @@ VisualStudioVersion = 16.0.31605.320
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DapperFluentQueryHelper", "Core\DapperFluentQueryHelper.csproj", "{18EB550F-D24B-4415-8CB9-AE50FB738170}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Example", "Example\Example.csproj", "{7E9C2C35-D524-4F09-9E2F-9DD7B24E0F9D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Example", "Example\Example.csproj", "{7E9C2C35-D524-4F09-9E2F-9DD7B24E0F9D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MySQLConnection", "..\MySQLConnection\MySQLConnection.csproj", "{066EC640-76D4-4145-B7A4-F62C46FFBA01}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{7E9C2C35-D524-4F09-9E2F-9DD7B24E0F9D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7E9C2C35-D524-4F09-9E2F-9DD7B24E0F9D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7E9C2C35-D524-4F09-9E2F-9DD7B24E0F9D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{066EC640-76D4-4145-B7A4-F62C46FFBA01}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{066EC640-76D4-4145-B7A4-F62C46FFBA01}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{066EC640-76D4-4145-B7A4-F62C46FFBA01}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{066EC640-76D4-4145-B7A4-F62C46FFBA01}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

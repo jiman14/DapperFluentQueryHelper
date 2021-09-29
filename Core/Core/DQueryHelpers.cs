@@ -40,14 +40,6 @@ namespace DapperFluentQueryHelper.Core
     #endregion
 
     #region Enums
-
-    internal enum CommandType
-    {
-        select,
-        insert,
-        update,
-        delete
-    }
     public enum JoinOperator
     {
         Distinct,

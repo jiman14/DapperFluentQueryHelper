@@ -1,7 +1,7 @@
 # Dapper Fluent Query Helper
 Dapper helper for writing fluent-mode queries.
 
- - .Net Standard 2.1.
+ - .Net Standard 2.0. (Xamarin compatible)
  - Only requires Dapper.
  - Uses Linq expressions for preventing hand-written strings.
 

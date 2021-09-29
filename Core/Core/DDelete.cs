@@ -1,32 +1,32 @@
-﻿using System;
+﻿using Dapper;
+using System;
+using System.Data;
 using System.Linq;
 using System.Linq.Expressions;
 
 namespace DapperFluentQueryHelper.Core
 {
-    public class DUpdate : DFilteredQuery
+    public class DDelete : DFilteredQuery
     {
-        public DUpdate Update<T>(Expression<Func<T>> expression)
+        public DDelete Delete<T>()
         {
-            UpdateFields = string.Join(", ", ((MemberInitExpression)expression?.Body)?.Bindings.Select(p =>
-                AddUpdateProperty<T>($"{p.Member.DeclaringType.Name}.{p.Member.Name}", ((ConstantExpression)((MemberAssignment)p).Expression).Value)));
-            CommandType = CommandTypes.update;
+            CommandType = CommandTypes.delete;
             var modelType = typeof(T);
             TableName = modelType.Name;
             ModelTypes.TryAdd(modelType.Name, modelType);
             return this;
         }
-        public DUpdate Where(Func<DFilteredQuery, DapperFluentFilters> where)
+        public DDelete Where(Func<DFilteredQuery, DapperFluentFilters> where)
         {
             var filters = where.Invoke(this);
             return Where(filters.FiltersStr);
         }
-        public DUpdate Where(Func<DFilteredQuery, DapperFluentFilter> where)
+        public DDelete Where(Func<DFilteredQuery, DapperFluentFilter> where)
         {
             var filter = where.Invoke(this);
             return Where(filter.CustomFilter);
         }
-        private DUpdate Where(string filtersStr)
+        private DDelete Where(string filtersStr)
         {
             WhereClause = string.IsNullOrEmpty(filtersStr) ? string.Empty : $"WHERE {filtersStr}";
             return this;
