@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Core\DapperFluentQueryHelper.csproj" />
+    <ProjectReference Include="..\DapperFluentQueryHelper\DapperFluentQueryHelper.csproj" />
   </ItemGroup>
 
 </Project>
