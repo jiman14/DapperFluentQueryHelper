@@ -22,7 +22,7 @@ namespace MySQLConnection.Core
             }
             catch (MySqlException ex)
             {
-                throw new SQLException($"{nameof(MySQLConnection)}.{nameof(SQLTransaction)}.{nameof(NonTransaction)}", ex);
+                throw new SQLException($"{callerMemberName} => {nameof(MySQLConnection)}.{nameof(SQLTransaction)}.{nameof(NonTransaction)}", ex);
             }
             finally
             {
@@ -44,7 +44,7 @@ namespace MySQLConnection.Core
             {                
                 if (Trans != null)
                     Rollback();
-                throw new SQLException($"{nameof(MySQLConnection)}.{nameof(SQLTransaction)}.{nameof(Transaction)}", ex);
+                throw new SQLException($"{callerMemberName} => {nameof(MySQLConnection)}.{nameof(SQLTransaction)}.{nameof(Transaction)}", ex);
             }
             finally
             {
@@ -52,7 +52,7 @@ namespace MySQLConnection.Core
             }
             return res;
         }
-        public bool Rollback()
+        public bool Rollback([CallerMemberName] string callerMemberName = "")
         {
             try
             {
@@ -60,7 +60,7 @@ namespace MySQLConnection.Core
             }
             catch (MySqlException ex)
             {
-                throw new SQLException($"{nameof(MySQLConnection)}.{nameof(SQLTransaction)}.{nameof(Rollback)}", ex);
+                throw new SQLException($"{callerMemberName} => {nameof(MySQLConnection)}.{nameof(SQLTransaction)}.{nameof(Rollback)}", ex);
             }
             return true;
         }
