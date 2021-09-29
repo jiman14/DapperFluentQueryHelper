@@ -49,14 +49,15 @@ Resulting in this query:
 
 # Update example
 ```
-   -- *This method perform an update only on the specified properties: price and category.
-    new DUpdate().Update(() => new Book { Price = 0, Category = "Free" })
+   // This method perform an update only on the specified properties: price and category.
+   new DUpdate().Update(() => new Book { Price = 0, Category = "Free" })
         .Where(w => w.FilterIsNull(nameof(Book.Price)));
 
 ```
 
 # Update example
 ```
+    // This method deletes all the books with a price greater than 6000.
     new DDelete().Delete()
         .Where(w => w.Filter(nameof(Book.Price), JoinOperator.GreaterThan, 6000));
 
@@ -64,16 +65,18 @@ Resulting in this query:
 
 # MySQL transactions example
 ```
-   BookList books = new SQLTransaction(connectionString)
-       .Transaction<BookList>(t => 
+    // The transaction block perform a rollback if there is some problem in the middle of the process.
+    BookList books = new SQLTransaction(connectionString)
+       .Transaction<BookList>(tran => 
         {
-            t.Query...
-            t.Update...
-            return t.Query<BookList>(new DSelect())...
+            tran.Query...
+            tran.Update...
+            return tran.Query<BookList>(new DSelect())...
        ));
 
+    // The non transaction block allows to reuse the connection.
     BookList books = new SQLTransaction(connectionString)
-       .NonTransaction<BookList>(t => t.Query<BookList>(
+       .NonTransaction<BookList>(nontran => nontran.Query<BookList>(
             new DSelect()...
        ));
 ```
