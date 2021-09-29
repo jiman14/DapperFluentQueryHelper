@@ -5,11 +5,11 @@ Dapper helper for writing fluent-mode queries.
  - Only requires Dapper.
  - Uses Linq expressions for preventing hand-written strings.
 
- This project includes commands for:
- - Select, Update & Delete.
- - The 'WHERE' statement can be added to each command
+ This project have commands for:
+ - Select, Update & Delete database operations.
+ - A 'WHERE' statement can be added to each command.
 
- In addition a MySQL database related project is added for managing connections and transactions.
+ In addition a little MySQL database related project is added for managing connections and transactions.
 
 # Select example 
 ```
@@ -49,6 +49,7 @@ Resulting in this query:
 
 # Update example
 ```
+   -- *This method perform an update only on the specified properties: price and category.
     new DUpdate().Update(() => new Book { Price = 0, Category = "Free" })
         .Where(w => w.FilterIsNull(nameof(Book.Price)));
 
