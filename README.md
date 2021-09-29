@@ -5,25 +5,32 @@ Dapper helper for writing fluent-mode queries.
  - Only requires Dapper.
  - Uses Linq expressions for preventing hand-written strings.
 
-# Example of use
+ This project includes commands for:
+ - Select, Update & Delete.
+ - The 'WHERE' statement can be added to each command
+
+ In addition a MySQL database related project is added for managing connections and transactions.
+
+# Select example 
 ```
-IEnumerable<BooksInfo> books = new DapperFluentQuery()
- .Select(nameof(Book.Id), nameof(Book.Title), nameof(Book.Date), nameof(Book.Price))
- .Select($"{nameof(Author)}.{nameof(Author.Name)}")
- .From<Book>()
- .Join(nameof(Book.Id), JoinOperator.Equals, $"{nameof(Author)}.{nameof(Author.Id)}")
- .Where(w => w.And(
-      w.Filter($"{nameof(Author)}.{nameof(Author.Prive)}" < 400),
-      w.Filter(nameof(Book.Category), Operator.NotLike, "Terror"),
-      w.FilterIsNotNull($"{nameof(Author)}.{nameof(Author.Reviews)}"),
-      w.Or(
-        w.FilterBetween(nameof(Book.Price), 10, 400),
-        w.FilterIsNull(nameof(Book.Price))
-        )
-      ))
- .OrderBy(Book.Date)
- .Query<BooksInfo>(DBConnection);
+     new DSelect()
+        .Select(nameof(Book.Id), nameof(Book.Title), nameof(Book.Date), nameof(Book.Price))
+        .Select($"{nameof(Author)}.{nameof(Author.Name)}")
+        .From<Book>()
+        .Join(nameof(Book.Id), JoinOperator.Equals, $"{nameof(Author)}.{nameof(Author.Id)}")
+        .Where(w => w.And(
+            w.Filter($"{nameof(Author)}.{nameof(Author.Prive)}" < 400),
+            w.Filter(nameof(Book.Category), Operator.NotLike, "Terror"),
+            w.FilterIsNotNull($"{nameof(Author)}.{nameof(Author.Reviews)}"),
+            w.Or(
+            w.FilterBetween(nameof(Book.Price), 10, 400),
+            w.FilterIsNull(nameof(Book.Price))
+            )
+            ))
+        .OrderBy(Book.Date)
+        .Query<BooksInfo>(DBConnection);    
 ```
+
 Resulting in this query:
 ```
  SELECT Book.Id, Book.Title, Book.Date, Book.Price, Author.Name
@@ -40,6 +47,35 @@ Resulting in this query:
   ORDER BY Book.Date
 ```
 
+# Update example
+```
+    new DUpdate().Update(() => new Book { Price = 0, Category = "Free" })
+        .Where(w => w.FilterIsNull(nameof(Book.Price)));
+
+```
+
+# Update example
+```
+    new DDelete().Delete()
+        .Where(w => w.Filter(nameof(Book.Price), JoinOperator.GreaterThan, 6000));
+
+```
+
+# MySQL transactions example
+```
+   BookList books = new SQLTransaction(connectionString)
+       .Transaction<BookList>(t => 
+        {
+            t.Query...
+            t.Update...
+            return t.Query<BookList>(new DSelect())...
+       ));
+
+    BookList books = new SQLTransaction(connectionString)
+       .NonTransaction<BookList>(t => t.Query<BookList>(
+            new DSelect()...
+       ));
+```
 
 # Simple, faster
 
