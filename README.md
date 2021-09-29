@@ -11,7 +11,7 @@ Dapper helper for writing fluent-mode queries.
 
  In addition a little MySQL database related project is added for managing connections and transactions.
 
-# Select example 
+# Select command example 
 ```
      new DSelect()
         .Select(nameof(Book.Id), nameof(Book.Title), nameof(Book.Date), nameof(Book.Price))
@@ -27,7 +27,7 @@ Dapper helper for writing fluent-mode queries.
             w.FilterIsNull(nameof(Book.Price))
             )
             ))
-        .OrderBy(Book.Date)
+        .OrderBy(nameof(Book.Date))
         .Query<BooksInfo>(DBConnection);    
 ```
 
@@ -47,7 +47,7 @@ Resulting in this query:
   ORDER BY Book.Date
 ```
 
-# Update example
+# Update command example
 ```
    // This method perform an update only on the specified properties: price and category.
    new DUpdate().Update(() => new Book { Price = 0, Category = "Free" })
@@ -55,7 +55,7 @@ Resulting in this query:
 
 ```
 
-# Update example
+# Delete command example
 ```
     // This method deletes all the books with a price greater than 6000.
     new DDelete().Delete()
