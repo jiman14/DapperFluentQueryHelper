@@ -1,6 +1,5 @@
 ﻿using Dapper;
 using Dapper.Contrib.Extensions;
-using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -17,6 +16,7 @@ namespace DapperFluentQueryHelper.Core
             Transaction = transaction;
         }
         public T Get<T>(int id) where T : BaseModel => Connection?.Get<T>(id, Transaction, commandTimeout: Connection?.ConnectionTimeout);
+        public T Get<T>(string id) where T : BaseModel => Connection?.Get<T>(id, Transaction, commandTimeout: Connection?.ConnectionTimeout);
         public IEnumerable<T> GetAll<T>() where T : BaseModel => Connection?.GetAll<T>(Transaction, commandTimeout: Connection?.ConnectionTimeout);
         public IEnumerable<T> Query<T>(DSelect select) => Connection.Query<T>(select.QueryStr, select.Parameters, Transaction, commandTimeout: Connection?.ConnectionTimeout);
         public T QueryOne<T>(DSelect select) => Connection.Query<T>(select.QueryStr, select.Parameters, Transaction, commandTimeout: Connection?.ConnectionTimeout).FirstOrDefault();                    
