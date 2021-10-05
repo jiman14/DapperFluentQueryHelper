@@ -117,29 +117,32 @@ namespace DapperFluentQueryHelper.Core
         /// </summary>
         public static string[] NetTypes = new string[] { "Byte", "byte[]", "bool", "char", "DateTime", "decimal", "double", "int", "Int16", "long", "single", "string" };
 
-        internal static DbType GetDBType(Type PropType)
+        internal static DbType GetDBType(string propType)
+        => GetDBType(Type.GetType(propType));
+                
+        internal static DbType GetDBType(Type propType)
         {
-            if (PropType == typeof(string))
+            if (propType == typeof(string))
                 return DbType.String;
-            else if (PropType == typeof(int) || PropType == typeof(Int32) || PropType == typeof(Nullable<int>) || PropType == typeof(Nullable<Int32>))
+            else if (propType == typeof(int) || propType == typeof(Int32) || propType == typeof(Nullable<int>) || propType == typeof(Nullable<Int32>))
                 return DbType.Int32;
-            else if (PropType == typeof(bool) || PropType == typeof(Nullable<bool>))
+            else if (propType == typeof(bool) || propType == typeof(Nullable<bool>))
                 return DbType.Boolean;
-            else if (PropType == typeof(TimeSpan) || PropType == typeof(Nullable<TimeSpan>))
+            else if (propType == typeof(TimeSpan) || propType == typeof(Nullable<TimeSpan>))
                 return DbType.Int64;
-            else if (PropType == typeof(DateTime) || PropType == typeof(Nullable<DateTime>))
+            else if (propType == typeof(DateTime) || propType == typeof(Nullable<DateTime>))
                 return DbType.DateTime;
-            else if (PropType == typeof(decimal) || PropType == typeof(Nullable<decimal>))
+            else if (propType == typeof(decimal) || propType == typeof(Nullable<decimal>))
                 return DbType.Currency;
-            else if (PropType == typeof(float) || PropType == typeof(double) || PropType == typeof(Nullable<double>))
+            else if (propType == typeof(float) || propType == typeof(double) || propType == typeof(Nullable<double>))
                 return DbType.Double;
-            else if (PropType == typeof(byte[]))
+            else if (propType == typeof(byte[]))
                 return DbType.Binary;
-            else if (PropType == typeof(long) || PropType == typeof(Int64) || PropType == typeof(Nullable<long>) || PropType == typeof(Nullable<Int64>))
+            else if (propType == typeof(long) || propType == typeof(Int64) || propType == typeof(Nullable<long>) || propType == typeof(Nullable<Int64>))
                 return DbType.Int64;
-            else if (PropType == typeof(char) || PropType == typeof(Nullable<char>))
+            else if (propType == typeof(char) || propType == typeof(Nullable<char>))
                 return DbType.Byte;
-            else if (PropType == typeof(Int16) || PropType == typeof(Nullable<Int16>))
+            else if (propType == typeof(Int16) || propType == typeof(Nullable<Int16>))
                 return DbType.Int16;
             else
                 throw new Exception($"{nameof(NetTypesToDBConversions)}. DB Conversion not implemented");

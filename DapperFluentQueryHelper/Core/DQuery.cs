@@ -1,4 +1,5 @@
 ﻿using Dapper;
+using DapperFluentQueryHelper.Core.Serializer;
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
@@ -41,6 +42,18 @@ namespace DapperFluentQueryHelper.Core
         public string DeleteStr
             => $"DELETE FROM {TableName} {WhereClause}"
             .Replace("__", ".");
+
+        public SerializableQuery SerializeSelect()
+            => Serialize(QueryStr);                                
+        public SerializableQuery SerializeUpdate()
+            => Serialize(UpdateStr);        
+        public SerializableQuery SerializeDelete()
+            => Serialize(DeleteStr);
+        private SerializableQuery Serialize(string query)
+        => SerializableQuery.Get(query, Parameters);
+        private DeserializedQuery Deserialize(SerializableQuery serializableQuery)
+        => DeserializedQuery.Get(serializableQuery);        
+
         #endregion
 
         #region Private methods
@@ -97,7 +110,7 @@ namespace DapperFluentQueryHelper.Core
 
             for (int i = 0; i < paramNumber; i++)
                 Parameters.Add($"P{++ParameterIndex}", values[i], dbType: PropertiesTypeCache.GetPropertyType(modelType, field));
-
+            
             return filter;
         }
         #endregion

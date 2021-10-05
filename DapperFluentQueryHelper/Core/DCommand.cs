@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using Dapper.Contrib.Extensions;
+using DapperFluentQueryHelper.Core.Serializer;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -14,12 +15,23 @@ namespace DapperFluentQueryHelper.Core
         {
             Connection = connection;
             Transaction = transaction;
+
         }
         public T Get<T>(int id) where T : BaseModel => Connection?.Get<T>(id, Transaction, commandTimeout: Connection?.ConnectionTimeout);
         public T Get<T>(string id) where T : BaseModel => Connection?.Get<T>(id, Transaction, commandTimeout: Connection?.ConnectionTimeout);
         public IEnumerable<T> GetAll<T>() where T : BaseModel => Connection?.GetAll<T>(Transaction, commandTimeout: Connection?.ConnectionTimeout);
         public IEnumerable<T> Query<T>(DSelect select) => Connection.Query<T>(select.QueryStr, select.Parameters, Transaction, commandTimeout: Connection?.ConnectionTimeout);
-        public T QueryOne<T>(DSelect select) => Connection.Query<T>(select.QueryStr, select.Parameters, Transaction, commandTimeout: Connection?.ConnectionTimeout).FirstOrDefault();                    
+        public IEnumerable<T> Query<T>(SerializableQuery serializedQuery)
+        {
+            var query = DeserializedQuery.Get(serializedQuery);
+            return Connection.Query<T>(query.Query, query.Parameters, Transaction, commandTimeout: Connection?.ConnectionTimeout);
+        }
+        public T QueryOne<T>(DSelect select) => Connection.Query<T>(select.QueryStr, select.Parameters, Transaction, commandTimeout: Connection?.ConnectionTimeout).FirstOrDefault();
+        public T QueryOne<T>(SerializableQuery serializedQuery)
+        {
+            var query = DeserializedQuery.Get(serializedQuery);
+            return Connection.Query<T>(query.Query, query.Parameters, Transaction, commandTimeout: Connection?.ConnectionTimeout).FirstOrDefault();
+        }
         public bool Update<T>(T obj) where T : BaseModel => Connection?.Update(obj, Transaction, commandTimeout: Connection?.ConnectionTimeout) ?? false;
         public bool Update<T>(IEnumerable<T> objs) where T : BaseModel => Connection?.Update(objs, Transaction, commandTimeout: Connection?.ConnectionTimeout) ?? false;
         public int Update(DUpdate updateQuery) => Connection?.Execute(updateQuery.UpdateStr, updateQuery.Parameters, Transaction, commandTimeout: Connection?.ConnectionTimeout) ?? -1;
