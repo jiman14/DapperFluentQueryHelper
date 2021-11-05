@@ -6,14 +6,11 @@ using System.Linq;
 namespace DapperFluentQueryHelper.Core
 {
     #region Filter helpers
-    public class DapperFluentFilters
-    {
-        public string FiltersStr { get; set; }
-        public DapperFluentFilters(string filters) => FiltersStr = filters;
-    }
     public class DapperFluentFilter
     {
         public string CustomFilter { get; set; }
+        public DapperFluentFilter() { }
+        public DapperFluentFilter(string filter) => CustomFilter = filter;
     }
     public class DapperFluentJoinFilter
     {
@@ -117,10 +114,10 @@ namespace DapperFluentQueryHelper.Core
         /// </summary>
         public static string[] NetTypes = new string[] { "Byte", "byte[]", "bool", "char", "DateTime", "decimal", "double", "int", "Int16", "long", "single", "string" };
 
-        internal static DbType GetDBType(string propType)
+        public static DbType GetDBType(string propType)
         => GetDBType(Type.GetType(propType));
                 
-        internal static DbType GetDBType(Type propType)
+        public static DbType GetDBType(Type propType)
         {
             if (propType == typeof(string))
                 return DbType.String;

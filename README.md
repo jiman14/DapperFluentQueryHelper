@@ -22,11 +22,11 @@ Dapper helper for writing fluent-mode queries.
             w.Filter($"{nameof(Author)}.{nameof(Author.Prive)}" < 400),
             w.Filter(nameof(Book.Category), Operator.NotLike, "Terror"),
             w.FilterIsNotNull($"{nameof(Author)}.{nameof(Author.Reviews)}"),
-            w.Or(
-            w.FilterBetween(nameof(Book.Price), 10, 400),
-            w.FilterIsNull(nameof(Book.Price))
-            )
+            w.F(w.Or(
+                w.FilterBetween(nameof(Book.Price), 10, 400),
+                w.FilterIsNull(nameof(Book.Price))
             ))
+         ))
         .OrderBy(nameof(Book.Date))
         .Query<BooksInfo>(DBConnection);    
 ```

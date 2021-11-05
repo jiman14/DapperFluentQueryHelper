@@ -16,11 +16,6 @@ namespace DapperFluentQueryHelper.Core
             ModelTypes.TryAdd(modelType.Name, modelType);
             return this;
         }
-        public DUpdate Where(Func<DFilteredQuery, DapperFluentFilters> where)
-        {
-            var filters = where.Invoke(this);
-            return Where(filters.FiltersStr);
-        }
         public DUpdate Where(Func<DFilteredQuery, DapperFluentFilter> where)
         {
             var filter = where.Invoke(this);

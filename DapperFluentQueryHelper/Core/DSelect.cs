@@ -19,6 +19,11 @@ namespace DapperFluentQueryHelper.Core
         {
             if (fields == null) throw new ArgumentNullException(nameof(fields));
             Distinct = (fields.Count() == 0) ? false: distinct;
+            if (fields.Count() > 0 && fields.First().Contains("."))
+            {
+                var fieldParts = fields.First().Split(new char[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
+                FromClause = fields.First().Replace($".{fieldParts[fieldParts.Count() - 1]}", string.Empty);
+            }
             SelectFields = (fields.Count() == 0)? "*": string.Join(",", fields.Where(f => !string.IsNullOrEmpty(f)));
             return this;
         }
@@ -26,12 +31,6 @@ namespace DapperFluentQueryHelper.Core
         {
             SelectFields = $"COUNT({columnName})";
             return this;
-        }
-
-        public DSelect Where(Func<DFilteredQuery, DapperFluentFilters> where)
-        {
-            var filters = where.Invoke(this);
-            return Where(filters.FiltersStr);
         }
         public DSelect Where(Func<DFilteredQuery, DapperFluentFilter> where)
         {
@@ -50,7 +49,11 @@ namespace DapperFluentQueryHelper.Core
         {
             var modelType = typeof(T);
             ModelTypes.TryAdd(modelType.Name, modelType);
-            FromClause = modelType.Name;
+            return From(modelType.Name);
+        }
+        public DSelect From(string from)
+        {
+            FromClause = from;
             return this;
         }
 

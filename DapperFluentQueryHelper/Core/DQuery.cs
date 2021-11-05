@@ -67,8 +67,7 @@ namespace DapperFluentQueryHelper.Core
         {
             var filter = new DapperFluentFilter();
             if (!field.Contains(".")) field = $"{TableName??FromClause}.{field}";
-            if (!ModelTypes.TryGetValue(field.Split('.').First(), out Type modelType))
-                throw new Exception($"Dapper fluent filter field {field} not found in FROM clause");
+            //ModelTypes.TryGetValue(field.Split('.').First(), out Type modelType);                
 
             if (((values == null || values.Length == 0 || values[0] == null) && !(op == FilterOperator.IsNull || op == FilterOperator.NotNull)) &&
                 ((string.IsNullOrEmpty(values[0]?.ToString()) && !(op == FilterOperator.Like || op == FilterOperator.NotLike)) ||
@@ -109,7 +108,7 @@ namespace DapperFluentQueryHelper.Core
                     ? values.ToList().First(): values);
 
             for (int i = 0; i < paramNumber; i++)
-                Parameters.Add($"P{++ParameterIndex}", values[i], dbType: PropertiesTypeCache.GetPropertyType(modelType, field));
+                Parameters.Add($"P{++ParameterIndex}", values[i]);//, dbType: PropertiesTypeCache.GetPropertyType(modelType, field));
             
             return filter;
         }
