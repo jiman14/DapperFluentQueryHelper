@@ -60,14 +60,13 @@ namespace DapperFluentQueryHelper.Core
         internal string AddUpdateProperty<T>(string field, object value)
         {
             var pIndex = ParameterIndex + 1;
-            Parameters.Add($"P{++ParameterIndex}", value, dbType: PropertiesTypeCache.GetPropertyType(typeof(T), field));
+            Parameters.Add($"P{++ParameterIndex}", value); //, dbType: PropertiesTypeCache.GetPropertyType(typeof(T), field));
             return $"{field} = @P{pIndex}";
         }       
         internal DapperFluentFilter FilterBase(string field, FilterOperator op, params object[] values)
         {
             var filter = new DapperFluentFilter();
-            if (!field.Contains(".")) field = $"{TableName??FromClause}.{field}";
-            //ModelTypes.TryGetValue(field.Split('.').First(), out Type modelType);                
+            if (!field.Contains(".")) field = $"{TableName??FromClause}.{field}";           
 
             if (((values == null || values.Length == 0 || values[0] == null) && !(op == FilterOperator.IsNull || op == FilterOperator.NotNull)) &&
                 ((string.IsNullOrEmpty(values[0]?.ToString()) && !(op == FilterOperator.Like || op == FilterOperator.NotLike)) ||

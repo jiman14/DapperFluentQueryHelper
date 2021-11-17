@@ -7,7 +7,7 @@ namespace Example
     {
         public DapperFluentQueryExample()
         {
-            new DUpdate().Update(() => new ClaseEjemplo { MyProperty1 = 1, MyProperty2 = "asdf" });                  
+            new DUpdate().Update(() => new ClaseEjemplo { MyProperty2 = "asdf" });                  
         }
     }
 
