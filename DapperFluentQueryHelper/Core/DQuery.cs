@@ -103,8 +103,7 @@ namespace DapperFluentQueryHelper.Core
                 op == FilterOperator.Between ? 2 : 1
             );
             if (paramNumber == -1)
-                Parameters.Add($"P{++ParameterIndex}", values.ToList().First().ToString().StartsWith($"{nameof(System)}.{nameof(System.Collections)}")
-                    ? values.ToList().First(): values);
+                Parameters.Add($"P{++ParameterIndex}", values.ToList().First());
 
             for (int i = 0; i < paramNumber; i++)
                 Parameters.Add($"P{++ParameterIndex}", values[i]);//, dbType: PropertiesTypeCache.GetPropertyType(modelType, field));
