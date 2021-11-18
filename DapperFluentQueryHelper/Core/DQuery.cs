@@ -34,7 +34,13 @@ namespace DapperFluentQueryHelper.Core
         private int ParameterIndex { get; set; } = 0;
 
         public string QueryStr
-            => $"SELECT {(Distinct ? "DISTINCT" : string.Empty)} {SelectFields} FROM {FromClause} {WhereClause} {GroupClause} {HavingClause} {OrderClause} {LimitClause}"
+            => $@"SELECT {(Distinct ? "DISTINCT" : string.Empty)} {SelectFields} 
+                  FROM {FromClause} 
+                  {(string.IsNullOrEmpty(WhereClause) ? "" : "WHERE ")}{WhereClause}
+                  {(string.IsNullOrEmpty(GroupClause) ? "" : "GROUP BY ")}{GroupClause} 
+                  {HavingClause} 
+                  {(string.IsNullOrEmpty(OrderClause) ? "" : "ORDER BY ")}{OrderClause} 
+                  {LimitClause}"
             .Replace("__", ".");
         public string UpdateStr
             => $"UPDATE {TableName} SET {UpdateFields} {WhereClause}"
@@ -42,6 +48,23 @@ namespace DapperFluentQueryHelper.Core
         public string DeleteStr
             => $"DELETE FROM {TableName} {WhereClause}"
             .Replace("__", ".");
+
+        public string DebugQuery()
+        {
+            var deserialized = SerializeSelect();
+            var i = deserialized.Parameters.Count()+1;
+            var query = deserialized.Query;
+            foreach (var param in deserialized.Parameters.OrderByDescending(p => int.Parse(p.Name.Substring(1))))
+            {
+                string value = $"'{param.Value}'";
+                if (param.ParamType.ToLower().Contains("int") || param.ParamType.ToLower().Contains("decimal"))
+                    value = $"{param.Value}";
+                else if (param.ParamType.ToLower().Contains("bool"))
+                    value = $"{param.Value.ToLower()}";
+                query = query.Replace($"@P{--i}", value);
+            }
+            return query;
+        }
 
         public SerializableQuery SerializeSelect()
             => Serialize(QueryStr);                                
@@ -71,6 +94,12 @@ namespace DapperFluentQueryHelper.Core
             if (((values == null || values.Length == 0 || values[0] == null) && !(op == FilterOperator.IsNull || op == FilterOperator.NotNull)) &&
                 ((string.IsNullOrEmpty(values[0]?.ToString()) && !(op == FilterOperator.Like || op == FilterOperator.NotLike)) ||
                 (op == FilterOperator.Between && ((values.Length != 2) || string.IsNullOrEmpty(values[1]?.ToString())))))
+                return filter;
+
+            if ((op == FilterOperator.BeginWith || op == FilterOperator.EndWith || 
+                op == FilterOperator.NotBeginWith || op == FilterOperator.NotEndWith || 
+                op == FilterOperator.LikeFull || op == FilterOperator.NotLikeFull)
+                && string.IsNullOrEmpty(values[0].ToString()))
                 return filter;
 
             var pIndex = ParameterIndex + 1;

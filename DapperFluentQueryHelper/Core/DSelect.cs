@@ -32,14 +32,22 @@ namespace DapperFluentQueryHelper.Core
             SelectFields = $"COUNT({columnName})";
             return this;
         }
+        public DSelect WhereAnd(Func<DFilteredQuery, DapperFluentFilter> where)
+        => Where(where, true);
+        public DSelect WhereOr(Func<DFilteredQuery, DapperFluentFilter> where)
+        => Where(where, false);
         public DSelect Where(Func<DFilteredQuery, DapperFluentFilter> where)
+        => Where(where, null);
+        private DSelect Where(Func<DFilteredQuery, DapperFluentFilter> where, bool? andOr)
         {
+            if (andOr.HasValue)
+                LastAndOr = andOr.Value ? "AND" : "OR";
             var filter = where.Invoke(this);
             return Where(filter.CustomFilter);
         }
         private DSelect Where(string filtersStr)
         {
-            WhereClause = string.IsNullOrEmpty(filtersStr) ? string.Empty : $"WHERE {filtersStr}";
+            FillWhereClause(filtersStr);
             return this;
         }
         #endregion
@@ -96,7 +104,7 @@ namespace DapperFluentQueryHelper.Core
 
         public DSelect GroupBy(params string[] fileds)
         {
-            GroupClause = fileds.Length == 0 ? string.Empty : $"GROUP BY {string.Join(",", fileds.Where(f => !string.IsNullOrEmpty(f)))}";
+            GroupClause = !fileds.Any() ? string.Empty : $"{string.Join(",", fileds.Where(f => !string.IsNullOrEmpty(f)))}";
             return this;
         }
         public DSelect OrderBy(string orderField) => OrderBy(orderField);
@@ -106,8 +114,8 @@ namespace DapperFluentQueryHelper.Core
         private DSelect OrderBy(string orderField, bool orderAsc = true)
         {
             OrderClause = (string.IsNullOrEmpty(OrderClause)) ?
-                $"ORDER BY {orderField} {(orderAsc ? QueryOrderBy.asc : QueryOrderBy.desc)}" :
-                $", {orderField} {(orderAsc ? QueryOrderBy.asc : QueryOrderBy.desc)}";                
+                $"{orderField} {(orderAsc ? QueryOrderBy.asc : QueryOrderBy.desc)}" :
+                $"{OrderClause}, {orderField} {(orderAsc ? QueryOrderBy.asc : QueryOrderBy.desc)}";                
             return this;
         }
 

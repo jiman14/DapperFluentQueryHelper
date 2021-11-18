@@ -23,7 +23,7 @@ namespace DapperFluentQueryHelper.Core
         }
         private DDelete Where(string filtersStr)
         {
-            WhereClause = string.IsNullOrEmpty(filtersStr) ? string.Empty : $"WHERE {filtersStr}";
+            FillWhereClause(filtersStr);
             return this;
         }
     }
