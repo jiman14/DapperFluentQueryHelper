@@ -43,7 +43,8 @@ namespace DapperFluentQueryHelper.Core
                   {LimitClause}"
             .Replace("__", ".");
         public string UpdateStr
-            => $"UPDATE {TableName} SET {UpdateFields} {WhereClause}"
+            => $@"UPDATE {TableName} SET {UpdateFields} 
+                {(string.IsNullOrEmpty(WhereClause) ? "" : "WHERE ")}{WhereClause}"
             .Replace("__", ".");
         public string DeleteStr
             => $"DELETE FROM {TableName} {WhereClause}"
@@ -132,7 +133,7 @@ namespace DapperFluentQueryHelper.Core
                 op == FilterOperator.Between ? 2 : 1
             );
             if (paramNumber == -1)
-                Parameters.Add($"P{++ParameterIndex}", values.ToList().First());
+                Parameters.Add($"P{++ParameterIndex}", values[0]);
 
             for (int i = 0; i < paramNumber; i++)
                 Parameters.Add($"P{++ParameterIndex}", values[i]);//, dbType: PropertiesTypeCache.GetPropertyType(modelType, field));
