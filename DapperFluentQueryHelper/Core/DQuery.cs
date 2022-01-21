@@ -43,10 +43,10 @@ namespace DapperFluentQueryHelper.Core
                   {LimitClause}"
             .Replace("__", ".");
         public string UpdateStr
-            => $"UPDATE {TableName} SET {UpdateFields} {WhereClause}"
+            => $"UPDATE {TableName} SET {UpdateFields} {(string.IsNullOrEmpty(WhereClause) ? "" : "WHERE ")}{WhereClause}"
             .Replace("__", ".");
         public string DeleteStr
-            => $"DELETE FROM {TableName} {WhereClause}"
+            => $"DELETE FROM {TableName} {(string.IsNullOrEmpty(WhereClause) ? "" : "WHERE ")}{WhereClause}"
             .Replace("__", ".");
 
         public string DebugQuery()
@@ -92,9 +92,19 @@ namespace DapperFluentQueryHelper.Core
             if (!field.Contains(".")) field = $"{TableName??FromClause}.{field}";           
 
             if (((values == null || values.Length == 0 || values[0] == null) && !(op == FilterOperator.IsNull || op == FilterOperator.NotNull)) &&
-                ((string.IsNullOrEmpty(values[0]?.ToString()) && !(op == FilterOperator.Like || op == FilterOperator.NotLike)) ||
-                (op == FilterOperator.Between && ((values.Length != 2) || string.IsNullOrEmpty(values[1]?.ToString())))))
+                ((values == null || string.IsNullOrEmpty(values[0]?.ToString()) && !(op == FilterOperator.Like || op == FilterOperator.NotLike)) ||
+                (op == FilterOperator.Between && ((values == null || values.Length != 2) || (values == null || string.IsNullOrEmpty(values[1]?.ToString()))))))
                 return filter;
+
+            if (op == FilterOperator.In)
+            {
+                if (values == null || !values.Any())
+                    return filter;
+                else if (values.ToList().First() is System.Collections.IList && (values.ToList().First() as System.Collections.IList).Count == 0)
+                    return filter;
+                else if (values.ToList().First() is Array && (values.ToList().First() as Array).Length == 0)
+                    return filter;
+            }
 
             if ((op == FilterOperator.BeginWith || op == FilterOperator.EndWith || 
                 op == FilterOperator.NotBeginWith || op == FilterOperator.NotEndWith || 
