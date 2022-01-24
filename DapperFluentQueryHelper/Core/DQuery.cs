@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using DapperFluentQueryHelper.Core.Serializer;
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Linq;
 
@@ -98,12 +99,12 @@ namespace DapperFluentQueryHelper.Core
 
             if (op == FilterOperator.In)
             {
-                if (values == null || !values.Any())
+                if (values == null) 
                     return filter;
-                else if (values.ToList().First() is System.Collections.IList && (values.ToList().First() as System.Collections.IList).Count == 0)
-                    return filter;
-                else if (values.ToList().First() is Array && (values.ToList().First() as Array).Length == 0)
-                    return filter;
+                else if (!values.Any() ||
+                    (values.ToList().First() is IList && (values.ToList().First() as IList).Count == 0) ||                    
+                    (values.ToList().First() is Array && (values.ToList().First() as Array).Length == 0))
+                    op = FilterOperator.IsNull;
             }
 
             if ((op == FilterOperator.BeginWith || op == FilterOperator.EndWith || 
