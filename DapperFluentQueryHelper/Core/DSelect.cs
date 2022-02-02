@@ -107,11 +107,11 @@ namespace DapperFluentQueryHelper.Core
             GroupClause = !fileds.Any() ? string.Empty : $"{string.Join(",", fileds.Where(f => !string.IsNullOrEmpty(f)))}";
             return this;
         }
-        public DSelect OrderBy(string orderField) => OrderBy(orderField);
+        public DSelect OrderBy(string orderField) => OrderBy(orderField, true);
         public DSelect OrderByDesc(string orderField) => OrderBy(orderField, false);
-        public DSelect ThenOrderBy(string orderField) => OrderBy(orderField);
+        public DSelect ThenOrderBy(string orderField) => OrderBy(orderField, true);
         public DSelect ThenOrderByDesc(string orderField) => OrderBy(orderField, false);
-        private DSelect OrderBy(string orderField, bool orderAsc = true)
+        private DSelect OrderBy(string orderField, bool orderAsc)
         {
             OrderClause = (string.IsNullOrEmpty(OrderClause)) ?
                 $"{orderField} {(orderAsc ? QueryOrderBy.asc : QueryOrderBy.desc)}" :
