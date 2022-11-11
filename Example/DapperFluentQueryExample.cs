@@ -1,5 +1,4 @@
 ﻿using DapperFluentQueryHelper.Core;
-using System;
 
 namespace Example
 {

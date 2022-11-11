@@ -1,8 +1,4 @@
-﻿using Dapper;
-using System;
-using System.Data;
-using System.Linq;
-using System.Linq.Expressions;
+﻿using System;
 
 namespace DapperFluentQueryHelper.Core
 {
@@ -16,6 +12,18 @@ namespace DapperFluentQueryHelper.Core
             ModelTypes.TryAdd(modelType.Name, modelType);
             return this;
         }
+        public DDelete From<T>()
+        {
+            var modelType = typeof(T);
+            ModelTypes.TryAdd(modelType.Name, modelType);
+            return From(modelType.Name);
+        }
+        public DDelete From(string from)
+        {
+            FromClause = from;
+            return this;
+        }
+
         public DDelete Where(Func<DFilteredQuery, DapperFluentFilter> where)
         {
             var filter = where.Invoke(this);
