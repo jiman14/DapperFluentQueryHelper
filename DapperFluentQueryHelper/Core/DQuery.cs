@@ -47,7 +47,7 @@ namespace DapperFluentQueryHelper.Core
             => $"UPDATE {TableName} SET {UpdateFields} {(string.IsNullOrEmpty(WhereClause) ? "" : "WHERE ")}{WhereClause}"
             .Replace("__", ".");
         public string DeleteStr
-            => $"DELETE FROM {TableName} {(string.IsNullOrEmpty(WhereClause) ? "" : "WHERE ")}{WhereClause}"
+            => $"DELETE FROM {FromClause} {(string.IsNullOrEmpty(WhereClause) ? "" : "WHERE ")}{WhereClause}"
             .Replace("__", ".");
 
         public string DebugQuery()
